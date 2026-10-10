@@ -1,68 +1,80 @@
-# google-calendar-sdk
+# entirius-py-google-calendar-sdk
 
-Pure-Python wrapper around Google Calendar API v3 for service-account flows with domain-wide delegation. Used by Volkanos modules that book slots on behalf of a real user (consultations, demos, deliveries) — most prominently the booking widget in `django-contact-forms`.
+A Python client for the Google Calendar API using a service account, part of
+Entirius, the open-source modular ecommerce platform. It reads free-busy and creates events on behalf of a real user
+through domain-wide delegation; it has no Django dependency and no booking logic.
 
-This SDK does **one thing**: talk to Google Calendar. It has no Django, no Volkanos coupling, no business logic about who can book what. Callers decide when to query, what to write, and which exceptions to surface.
+[![PyPI](https://img.shields.io/pypi/v/entirius-py-google-calendar-sdk.svg)](https://pypi.org/project/entirius-py-google-calendar-sdk/)
+[![Python](https://img.shields.io/pypi/pyversions/entirius-py-google-calendar-sdk.svg)](https://pypi.org/project/entirius-py-google-calendar-sdk/)
+[![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](https://github.com/entirius/entirius-py-google-calendar-sdk/blob/develop/LICENSE)
 
-## Install
+## What it does
 
-```bash
-uv pip install entirius-py-google-calendar-sdk
+- Reads the busy periods of the impersonated user's primary calendar, merged with an optional shared calendar
+  (`get_busy_periods()`).
+- Checks one slot before booking (`is_slot_free()`).
+- Creates an event with an attendee and an optional Google Meet link (`create_event()`).
+- Wraps every Google API failure in `CalendarAPIError`; credential failures raise its subclass `CredentialsError`.
+- Caches the API service per credentials file and impersonated user.
+
+## Installation
+
+```shell
+uv add entirius-py-google-calendar-sdk
+pip install entirius-py-google-calendar-sdk
 ```
 
-Or as a dependency in `pyproject.toml`:
+The import name is `google_calendar_sdk`.
 
-```toml
-"entirius-py-google-calendar-sdk>=2.0.0"
-```
-
-## Use
+## Quick start
 
 ```python
 from datetime import datetime, timezone
+
 from google_calendar_sdk import GoogleCalendarClient
 
-client = GoogleCalendarClient(
-    credentials_path="/app/credentials/sa.json",
-    impersonate_email="bookings@yourdomain.com",
-    calendar_id="primary",  # or a shared calendar ID
-)
-
-free = client.is_slot_free(
-    start=datetime(2026, 4, 20, 14, 0, tzinfo=timezone.utc),
-    end=datetime(2026, 4, 20, 14, 30, tzinfo=timezone.utc),
-    timezone="Europe/Warsaw",
-)
-
-if free:
+client = GoogleCalendarClient(credentials_path="/path/to/sa.json", impersonate_email="bookings@example.com")
+start = datetime(2026, 4, 20, 14, 0, tzinfo=timezone.utc)
+end = datetime(2026, 4, 20, 14, 30, tzinfo=timezone.utc)
+if client.is_slot_free(start=start, end=end, timezone="Europe/Warsaw"):
     event = client.create_event(
-        start=datetime(2026, 4, 20, 14, 0, tzinfo=timezone.utc),
-        end=datetime(2026, 4, 20, 14, 30, tzinfo=timezone.utc),
-        summary="Consultation - Jan",
-        attendee_email="jan@example.com",
-        description="Booking via website widget",
-        timezone="Europe/Warsaw",
-        create_meet_link=True,
+        start=start, end=end, summary="Consultation", attendee_email="jan@example.com", timezone="Europe/Warsaw"
     )
     print(event.event_id, event.meet_link)
 ```
 
-## Service-account setup
+## Requirements
 
-1. Create a Google Cloud project, enable the Calendar API.
-2. Create a service account with **domain-wide delegation**.
-3. In Google Workspace admin: grant the service account the scope `https://www.googleapis.com/auth/calendar`.
-4. Download the JSON key. Mount it inside the container as a private file (e.g. `/app/credentials/sa.json`).
-5. The `impersonate_email` argument is the real user the service account acts as — events are created on that user's `primary` calendar so they receive the invite and own the event.
+- Python 3.11 or newer.
+- `google-api-python-client` and `google-auth` (installed as dependencies).
+- A Google Cloud service account with domain-wide delegation and the Calendar scope.
 
-## Free-busy semantics
+## Documentation
 
-`get_busy_periods` always queries the impersonated user's `primary` calendar. If `calendar_id` is set to anything other than `"primary"`, the shared calendar is queried as well — and busy periods from both are merged. This is the standard pattern for "the consultant has both a personal calendar AND a shared booking calendar; both must be free".
+- Service-account setup and free-busy semantics: https://github.com/entirius/entirius-py-google-calendar-sdk/blob/develop/docs/setup.md
+- Public API: https://github.com/entirius/entirius-py-google-calendar-sdk/blob/develop/docs/api.md
+- Design rules: https://github.com/entirius/entirius-py-google-calendar-sdk/blob/develop/docs/design.md
+- Entirius documentation: https://docs.entirius.com/
+- Releases: https://github.com/entirius/entirius-py-google-calendar-sdk/releases
 
-## Tests
+## Part of Entirius
 
-```bash
-pytest
+This SDK is the Google Calendar client of the Entirius backend service (Volkanos) and its modules.
+
+- Backend service: https://github.com/entirius/entirius-service-volkanos
+- Docker harness: https://github.com/entirius/entirius-zeno
+- Consumer module: https://github.com/entirius/entirius-django-contact-forms
+
+## Development
+
+```shell
+make install     # sync dependencies (uv)
+make check       # lint + format check (ruff)
+make test        # test suite (pytest); the Google API client is mocked, no network needed
 ```
 
-Tests fully mock `googleapiclient.discovery.build` so no network access is required.
+Development and agent instructions: https://github.com/entirius/entirius-py-google-calendar-sdk/blob/develop/AGENTS.md
+
+## License
+
+Mozilla Public License 2.0 (MPL-2.0) — see https://github.com/entirius/entirius-py-google-calendar-sdk/blob/develop/LICENSE.
