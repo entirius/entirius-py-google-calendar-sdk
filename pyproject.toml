@@ -1,7 +1,19 @@
 [project]
 name = "entirius-py-google-calendar-sdk"
 version = "2.0.0"
-description = "Pure-Python Google Calendar API v3 wrapper for service-account + domain-wide-delegation flows"
+description = "Google Calendar API client for service accounts, part of Entirius, the open-source modular ecommerce platform"
+keywords = ["google-calendar", "calendar", "booking", "service-account", "sdk", "entirius"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+]
 authors = [{ name = "Entirius" }]
 maintainers = [
     { name = "Piotr Brzozowski", email = "piotrb@entirius.com" },
@@ -22,7 +34,11 @@ dev  = ["ruff", "pre-commit"]
 test = ["pytest"]
 
 [project.urls]
+Homepage = "https://docs.entirius.com/"
+Documentation = "https://github.com/entirius/entirius-py-google-calendar-sdk/tree/develop/docs"
 Repository = "https://github.com/entirius/entirius-py-google-calendar-sdk"
+Changelog = "https://github.com/entirius/entirius-py-google-calendar-sdk/releases"
+Issues = "https://github.com/entirius/entirius-py-google-calendar-sdk/issues"
 
 [build-system]
 requires = ["hatchling"]
